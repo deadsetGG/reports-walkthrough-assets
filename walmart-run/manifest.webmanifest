@@ -1,0 +1,18 @@
+{
+  "name": "Happy Valley Walmart Run",
+  "short_name": "Walmart Run",
+  "description": "Persistent budget, route, and cart-load optimizer for Walmart Supercenter #5190.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f7",
+  "theme_color": "#075985",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
