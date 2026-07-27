@@ -1,0 +1,27 @@
+{
+  "validated_at": "2026-07-27T00:20:00-07:00",
+  "recording_units": 48,
+  "recording_subtotal": 227.84,
+  "added_items": {
+    "Ketel One Vodka 750 mL": 21.53,
+    "HART 50-gallon wheeled tote": 48.38
+  },
+  "initial_planned_subtotal": 297.75,
+  "tests": [
+    "JavaScript syntax",
+    "service worker syntax",
+    "manifest JSON",
+    "HTML structure",
+    "mobile interaction",
+    "persistent state reload",
+    "price and aisle editing",
+    "budget totals",
+    "route and map views",
+    "cart-load optimizer",
+    "suggestion add flow"
+  ],
+  "browser": "Chromium via Playwright, 390x844 mobile viewport",
+  "result": "pass",
+  "split_script_loading": "passed",
+  "offline_shell_files": "passed"
+}
