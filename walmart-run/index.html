@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#075985">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Persistent, budget-aware shopping route and cart-load optimizer for Walmart Supercenter #5190 on Happy Valley Road.">
+  <title>Happy Valley Walmart Run</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Walmart Supercenter #5190</p>
+      <h1>Happy Valley Run</h1>
+      <p class="store-line">2501 W Happy Valley Rd · Phoenix</p>
+    </div>
+    <button id="installButton" class="icon-button hidden" type="button" aria-label="Install shopping app">Install</button>
+  </header>
+
+  <main>
+    <section class="summary-grid" aria-label="Trip summary">
+      <article class="summary-card">
+        <span>Planned</span>
+        <strong id="plannedSubtotal">$0.00</strong>
+        <small id="verifiedBaseline">Recording baseline</small>
+      </article>
+      <article class="summary-card">
+        <span>In cart</span>
+        <strong id="pickedSubtotal">$0.00</strong>
+        <small id="checkoutEstimate">$0.00 with cushion</small>
+      </article>
+      <article class="summary-card">
+        <span>Progress</span>
+        <strong id="progressValue">0%</strong>
+        <div class="progress-track" aria-hidden="true"><div id="progressBar"></div></div>
+      </article>
+    </section>
+
+    <section class="budget-panel panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Budget guardrail</p>
+          <h2 id="budgetHeadline">Within target</h2>
+        </div>
+        <button id="budgetToggle" class="text-button" type="button">Adjust</button>
+      </div>
+      <p id="budgetDetail" class="muted"></p>
+      <div id="budgetControls" class="budget-controls hidden">
+        <label>Target budget
+          <input id="targetBudget" type="number" min="0" step="1" inputmode="decimal">
+        </label>
+        <label>Flexible ceiling
+          <input id="flexBudget" type="number" min="0" step="1" inputmode="decimal">
+        </label>
+        <label>Checkout cushion
+          <div class="suffix-input"><input id="taxCushion" type="number" min="0" max="25" step="0.1" inputmode="decimal"><span>%</span></div>
+        </label>
+      </div>
+    </section>
+
+    <section id="nextStop" class="next-stop panel" aria-live="polite">
+      <div>
+        <p class="eyebrow">Next best stop</p>
+        <h2 id="nextItemName">Loading route…</h2>
+        <p id="nextItemMeta" class="muted"></p>
+      </div>
+      <div class="next-actions">
+        <a id="verifyItemLink" class="secondary-button" href="#" target="_blank" rel="noopener">Verify aisle</a>
+        <button id="markNextButton" class="primary-button" type="button">Put in cart</button>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Shopping app sections">
+      <button class="tab active" data-view="route" type="button">Route</button>
+      <button class="tab" data-view="map" type="button">Map</button>
+      <button class="tab" data-view="load" type="button">Cart load</button>
+      <button class="tab" data-view="extras" type="button">Extras</button>
+      <button class="tab" data-view="settings" type="button">Tools</button>
+    </nav>
+
+    <section id="routeView" class="view">
+      <div class="toolbar panel compact">
+        <label class="search-wrap"><span class="sr-only">Search shopping list</span><input id="searchInput" type="search" placeholder="Search items"></label>
+        <select id="departmentFilter" aria-label="Filter by department"><option value="all">All stops</option></select>
+        <select id="statusFilter" aria-label="Filter by status">
+          <option value="active">Need + in cart</option>
+          <option value="need">Need</option>
+          <option value="cart">In cart</option>
+          <option value="unavailable">Unavailable</option>
+          <option value="skip">Skipped</option>
+          <option value="all">Everything</option>
+        </select>
+      </div>
+      <div class="route-key">
+        <span><i class="dot core"></i>Core</span>
+        <span><i class="dot estimate"></i>Price/stock estimate</span>
+        <span><i class="dot cold"></i>Cold last</span>
+      </div>
+      <div id="routeList" class="route-list"></div>
+    </section>
+
+    <section id="mapView" class="view hidden">
+      <article class="panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Reconstructed layout</p><h2>Department route</h2></div>
+          <span id="mapConfidence" class="badge">Department-level</span>
+        </div>
+        <p class="warning-note">This is not an official Walmart floor plan. Exact aisle codes can move during remodels; enter the code shown in Walmart Store Mode and this app will keep it with the item.</p>
+        <div id="storeMap" class="store-map" role="img" aria-label="Schematic store layout with the next department highlighted">
+          <div class="map-zone entrance" data-map-dept="Checkout">Entrance / checkout</div>
+          <div class="map-zone storage" data-map-dept="Storage">Storage & seasonal</div>
+          <div class="map-zone home" data-map-dept="Home">Home & candles</div>
+          <div class="map-zone paper" data-map-dept="Paper">Paper & household</div>
+          <div class="map-zone center">Apparel / center store</div>
+          <div class="map-zone grocery" data-map-dept="Pantry">
+            <span>Dry grocery</span>
+            <div class="aisle-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="map-zone snacks" data-map-dept="Snacks">Cereal & snacks</div>
+          <div class="map-zone drinks" data-map-dept="Drinks">Beverages</div>
+          <div class="map-zone spirits" data-map-dept="Spirits">Spirits / locked case</div>
+          <div class="map-zone dairy" data-map-dept="Dairy">Dairy wall</div>
+          <div class="map-zone frozen" data-map-dept="Frozen">Frozen wall</div>
+          <div class="map-zone water" data-map-dept="Heavy exit">Water pickup last</div>
+        </div>
+        <ol id="departmentRoute" class="department-route"></ol>
+      </article>
+      <article class="panel gps-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Arrival detection</p><h2>GPS status</h2></div><button id="gpsButton" class="secondary-button" type="button">Start GPS</button></div>
+        <p id="gpsStatus" class="muted">GPS can confirm that you reached the shopping center. Indoor aisle positioning is not accurate enough to automate item completion.</p>
+      </article>
+    </section>
+
+    <section id="loadView" class="view hidden">
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Contextual load plan</p><h2>Shopping cart optimizer</h2></div><span id="loadStatus" class="badge"></span></div>
+        <p id="loadAdvice" class="muted"></p>
+        <div class="cart-diagram" aria-label="Recommended shopping cart zones">
+          <section class="cart-zone child-seat"><h3>Protected / upright</h3><div id="zoneProtected"></div></section>
+          <section class="cart-zone basket-top"><h3>Light & crushable</h3><div id="zoneLight"></div></section>
+          <section class="cart-zone basket-bottom"><h3>Dense pantry</h3><div id="zoneDense"></div></section>
+          <section class="cart-zone lower-rack"><h3>Lower rack / heavy</h3><div id="zoneHeavy"></div></section>
+          <section class="cart-zone cold-group"><h3>Cold group</h3><div id="zoneCold"></div></section>
+        </div>
+        <div class="load-rule"><strong>Live rule:</strong> water stays out until the final pass. Glass and sauce jars remain upright. Frozen and milk stay grouped for the drive home.</div>
+      </article>
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Car loading</p><h2>Fast unload later</h2></div></div>
+        <div id="carLoadPlan" class="car-load-plan"></div>
+      </article>
+    </section>
+
+    <section id="extrasView" class="view hidden">
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Only useful additions</p><h2>Budget-aware extras</h2></div><span id="extrasRoom" class="badge"></span></div>
+        <p class="muted">Suggestions adapt to the move, your low-effort food preferences, the vodka addition, and the remaining flexible budget. Nothing is added automatically.</p>
+        <div id="suggestionList"></div>
+      </article>
+    </section>
+
+    <section id="settingsView" class="view hidden">
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Persistence</p><h2>Trip tools</h2></div></div>
+        <div class="tool-grid">
+          <button id="exportButton" type="button">Export state</button>
+          <label class="file-button">Import state<input id="importInput" type="file" accept="application/json"></label>
+          <button id="resetStatusesButton" type="button">Reset progress</button>
+          <button id="resetAllButton" class="danger-button" type="button">Factory reset</button>
+        </div>
+        <p class="muted">Progress, actual prices, aisle codes, budget settings, and cart-load decisions persist on this device—even after closing the browser.</p>
+      </article>
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Data quality</p><h2>What is verified</h2></div></div>
+        <ul class="quality-list">
+          <li><strong>Original recording:</strong> 48 units totaling exactly $227.84.</li>
+          <li><strong>Added today:</strong> Ketel One 750 mL and a 50-gallon wheeled tote use current online reference prices until confirmed at store #5190.</li>
+          <li><strong>Floor layout:</strong> department-level reconstruction only; individual aisle codes are user-calibrated.</li>
+          <li><strong>GPS:</strong> shopping-center arrival only, never fake indoor aisle tracking.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
