@@ -1,0 +1,13 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /srv/appdata/jellyfin:/config
+      - /srv/cache/jellyfin:/cache
+      - /srv/media:/media:ro
+    # Uncomment on Intel/AMD systems with /dev/dri for hardware transcoding.
+    # devices:
+    #   - /dev/dri:/dev/dri
