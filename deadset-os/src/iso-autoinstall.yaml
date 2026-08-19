@@ -1,0 +1,70 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  # Keep the destructive choices local and visible. The installer asks the
+  # normal Ubuntu questions, including target storage and identity.
+  interactive-sections:
+    - "*"
+
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  timezone: America/Phoenix
+
+  ssh:
+    install-server: true
+    allow-pw: false
+
+  drivers:
+    install: false
+  codecs:
+    install: true
+  updates: security
+
+  packages:
+    - ubuntu-desktop
+    - openssh-server
+    - curl
+    - ca-certificates
+
+  late-commands:
+    - |
+      set -eu
+      payload=/cdrom/deadset
+      test -r "$payload/firstboot.sh"
+      test -r "$payload/firstboot.service"
+      test -r "$payload/first-login.sh"
+      test -r "$payload/first-login.desktop"
+      test -r "$payload/migration-restore.sh"
+      test -r "$payload/jellyfin.compose.yml"
+
+      install -d -m 0755 \
+        /target/usr/local/sbin \
+        /target/usr/local/bin \
+        /target/etc/systemd/system \
+        /target/etc/ubuntu-workstation-bootstrap \
+        /target/etc/xdg/autostart
+
+      install -m 0755 "$payload/firstboot.sh" /target/usr/local/sbin/ubuntu-workstation-bootstrap
+      install -m 0755 "$payload/migration-restore.sh" /target/usr/local/sbin/deadset-migration-restore
+      install -m 0644 "$payload/firstboot.service" /target/etc/systemd/system/ubuntu-workstation-bootstrap.service
+      install -m 0755 "$payload/first-login.sh" /target/usr/local/bin/deadset-first-login
+      install -m 0644 "$payload/first-login.desktop" /target/etc/xdg/autostart/deadset-first-login.desktop
+      install -m 0644 "$payload/jellyfin.compose.yml" /target/etc/ubuntu-workstation-bootstrap/jellyfin.compose.yml
+
+      primary_user="$(awk -F: '$3 == 1000 && $1 != "nobody" {print $1; exit}' /target/etc/passwd)"
+      test -n "$primary_user"
+      printf '%s\n' \
+        "PRIMARY_USER=$primary_user" \
+        'INSTALL_RESTRICTED_EXTRAS=1' \
+        'INSTALL_GAMING=0' \
+        'AUTO_REBOOT_AFTER_BOOTSTRAP=1' \
+        > /target/etc/ubuntu-workstation-bootstrap/bootstrap.env
+      chmod 0600 /target/etc/ubuntu-workstation-bootstrap/bootstrap.env
+      printf '%s\n' 'MIGRATION_ENABLED=0' > /target/etc/ubuntu-workstation-bootstrap/migration.env
+      chmod 0600 /target/etc/ubuntu-workstation-bootstrap/migration.env
+
+      curtin in-target --target=/target -- systemctl enable ubuntu-workstation-bootstrap.service
+
+  shutdown: reboot
