@@ -18,7 +18,18 @@ jobs:
 
       - name: Install ISO tooling
         run: |
-          sudo apt-get install -y --no-install-recommends xorriso
+          mkdir -p /tmp/deadset-xorriso/debs /tmp/deadset-xorriso/root
+          cd /tmp/deadset-xorriso/debs
+          base=https://archive.ubuntu.com/ubuntu/pool/main
+          curl -fsSLO "$base/libi/libisoburn/xorriso_1.5.6-1.1ubuntu3_amd64.deb"
+          curl -fsSLO "$base/libi/libisoburn/libisoburn1t64_1.5.6-1.1ubuntu3_amd64.deb"
+          curl -fsSLO "$base/libb/libburn/libburn4t64_1.5.6-1.1build1_amd64.deb"
+          curl -fsSLO "$base/libi/libisofs/libisofs6t64_1.5.6.pl01-1.1ubuntu3_amd64.deb"
+          for deb in *.deb; do
+            dpkg-deb -x "$deb" /tmp/deadset-xorriso/root
+          done
+          echo 'LD_LIBRARY_PATH=/tmp/deadset-xorriso/root/usr/lib/x86_64-linux-gnu' >> "$GITHUB_ENV"
+          echo 'XORRISO=/tmp/deadset-xorriso/root/usr/bin/xorriso' >> "$GITHUB_ENV"
 
       - name: Build and verify ISO
         run: |
