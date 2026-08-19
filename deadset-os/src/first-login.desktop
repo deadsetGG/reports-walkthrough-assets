@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Deadset 1Password-first setup
+Comment=Connect 1Password before opening other account sign-ins
+Exec=/usr/local/bin/deadset-first-login
+TryExec=/usr/local/bin/deadset-first-login
+Icon=dialog-password
+Terminal=false
+OnlyShowIn=GNOME;Unity;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=8
+NoDisplay=true
