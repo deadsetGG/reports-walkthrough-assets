@@ -1,0 +1,19 @@
+[Unit]
+Description=Deadset Ubuntu workstation + homelab first-boot provisioning
+Wants=network-online.target
+After=network-online.target cloud-final.service
+Before=display-manager.service
+ConditionPathExists=!/var/lib/deadset-ubuntu-bootstrap/complete
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ubuntu-workstation-bootstrap
+RemainAfterExit=yes
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=30
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
