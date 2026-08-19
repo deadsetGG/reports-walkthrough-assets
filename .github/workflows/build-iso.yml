@@ -1,0 +1,56 @@
+name: Build Deadset Ubuntu 26.04 ISO
+
+on:
+  push:
+    branches:
+      - deadset-os-iso-build
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ISO tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xorriso
+
+      - name: Build and verify ISO
+        run: |
+          bash deadset-os/scripts/build-custom-iso.sh
+          cd deadset-os/build/iso
+          sha256sum -c deadset-ubuntu-26.04-amd64.iso.sha256
+
+      - name: Split for GitHub release asset limits
+        run: |
+          cd deadset-os/build/iso
+          split -b 1900M -d -a 2 \
+            deadset-ubuntu-26.04-amd64.iso \
+            deadset-ubuntu-26.04-amd64.iso.part
+          sha256sum \
+            deadset-ubuntu-26.04-amd64.iso \
+            deadset-ubuntu-26.04-amd64.iso.part00 \
+            deadset-ubuntu-26.04-amd64.iso.part01 \
+            > SHA256SUMS.txt
+          cp ../../scripts/join-deadset-iso.sh .
+
+      - name: Publish durable release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=deadset-ubuntu-26.04
+          gh release delete "$tag" --cleanup-tag --yes || true
+          gh release create "$tag" \
+            deadset-os/build/iso/deadset-ubuntu-26.04-amd64.iso.part00 \
+            deadset-os/build/iso/deadset-ubuntu-26.04-amd64.iso.part01 \
+            deadset-os/build/iso/SHA256SUMS.txt \
+            deadset-os/build/iso/join-deadset-iso.sh \
+            --target "$GITHUB_SHA" \
+            --title "Deadset Ubuntu 26.04 LTS" \
+            --notes "Custom Ubuntu 26.04 LTS installer for the Deadset workstation/server stack. Download both ISO parts and run join-deadset-iso.sh."
